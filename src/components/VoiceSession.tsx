@@ -11,7 +11,7 @@ import {
   VOICE_NAME,
 } from "../../shared/realtime.ts";
 import { realtimeSetupUrl } from "../lib/api.ts";
-import { recordOutputAudio, recordSessionStart } from "../lib/voice-usage.ts";
+import { startSessionClock, stopSessionClock } from "../lib/voice-usage.ts";
 
 /**
  * Both of these are compared by identity inside the hook: a fresh object on
@@ -33,6 +33,11 @@ const sessionConfig = {
   // format cannot disagree. Omit these and the provider picks its own.
   inputAudioFormat: { type: AUDIO_FORMAT_TYPE, rate: AUDIO_SAMPLE_RATE },
   outputAudioFormat: { type: AUDIO_FORMAT_TYPE, rate: AUDIO_SAMPLE_RATE },
+  // The transcript below is built entirely from transcription events. Asking
+  // for both directions explicitly beats relying on a provider default —
+  // without them the audio still works and the page just looks empty.
+  inputAudioTranscription: {},
+  outputAudioTranscription: {},
   // Server-side VAD: the model decides when a turn ends, so there is no
   // push-to-talk button.
   turnDetection: { type: "server-vad" },
@@ -51,14 +56,23 @@ export default function VoiceSession({ password }: { password: string }) {
     api: { token: realtimeSetupUrl(password) },
     sessionConfig,
     sampleRate: AUDIO_SAMPLE_RATE,
-    onEvent: (event) => {
-      // Every chunk of generated audio, which is also what xAI bills for.
-      if (event.type === "audio-delta") recordOutputAudio(event.delta);
-    },
     onError: (sessionError) => setError(sessionError.message),
   });
 
-  const { status, messages, isCapturing, isPlaying, startAudioCapture } = realtime;
+  const { status, messages, events, isCapturing, isPlaying, startAudioCapture } = realtime;
+
+  /**
+   * The Gateway bills by the second the session is open, so the meter runs off
+   * the connection itself. Stopping on unmount matters: the Clear button
+   * remounts this component, and a clock left running would keep charging for a
+   * socket that no longer exists.
+   */
+  useEffect(() => {
+    if (status !== "connected") return;
+
+    startSessionClock();
+    return () => stopSessionClock();
+  }, [status]);
 
   /**
    * Events sent before the socket opens are dropped, so capture waits for
@@ -90,7 +104,6 @@ export default function VoiceSession({ password }: { password: string }) {
       return;
     }
 
-    recordSessionStart();
     await realtime.connect();
   };
 
@@ -143,6 +156,20 @@ export default function VoiceSession({ password }: { password: string }) {
           </IonText>
         )}
       </div>
+
+      {/**
+       * Dev-only, and the fastest way to tell the two bring-up failures apart:
+       * `audio-delta` arriving with nothing audible is the playback path, no
+       * `audio-delta` at all is the session config.
+       */}
+      {import.meta.env.DEV && events.length > 0 && (
+        <pre className="voice-events">
+          {events
+            .slice(-12)
+            .map((event) => event.type)
+            .join(" · ")}
+        </pre>
+      )}
 
       {messages.length === 0 ? (
         <IonNote className="voice-empty">

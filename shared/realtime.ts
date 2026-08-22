@@ -30,14 +30,26 @@ export const AUDIO_BYTES_PER_SAMPLE = 2;
 export const REALTIME_TOKEN_TTL_SECONDS = 60;
 
 /**
- * xAI bills speech-to-speech by the minute of generated audio, not by token.
- * Published rate for grok-voice-think-fast-2.0 as of 2026-08-22:
- * https://docs.x.ai/developers/pricing#voice-api-pricing
+ * The Gateway's own published rates for this model, from
+ * `curl https://ai-gateway.vercel.sh/v1/models` → `pricing`:
  *
- * The Gateway's own `getSpendReport()` would be authoritative, but it is a
- * paid-plan feature, so the app meters the audio it receives instead.
+ *   realtime_session_duration_cost_per_second: 0.001334   ($0.08/min)
+ *   realtime_client_message_cost:              0.004
+ *
+ * Note what the meter is charging for: **wall-clock time connected**, not
+ * minutes of speech. Silence costs the same as talking, so leaving a session
+ * open is the expensive mistake.
+ *
+ * The Gateway's `getSpendReport()` would be the actual invoice, but it needs a
+ * paid plan — so the footer counts seconds locally and prices them here.
  */
-export const USD_PER_OUTPUT_AUDIO_MINUTE = 0.08;
+export const USD_PER_SESSION_SECOND = 0.001334;
+
+/**
+ * Charged per text message the client sends. This UI is voice-only and never
+ * calls `sendTextMessage`, so it contributes nothing today.
+ */
+export const USD_PER_CLIENT_TEXT_MESSAGE = 0.004;
 
 /**
  * `experimental_useRealtime` fetches the setup endpoint itself and does not let

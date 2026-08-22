@@ -1,49 +1,35 @@
 import { useSyncExternalStore } from "react";
 
-import {
-  AUDIO_BYTES_PER_SAMPLE,
-  AUDIO_SAMPLE_RATE,
-  USD_PER_OUTPUT_AUDIO_MINUTE,
-} from "../../shared/realtime.ts";
+import { USD_PER_SESSION_SECOND } from "../../shared/realtime.ts";
 
 /**
  * Running total of what the voice sessions have cost, kept in localStorage so a
  * page reload does not reset it.
  *
- * xAI does not send a usage/cost field we can read, and it bills speech-to-
- * speech per minute of *generated* audio — so the meter is the generated audio
- * itself: every `audio-delta` carries base64 PCM16 at a known sample rate, and
- * bytes divide straight into seconds. That makes this an estimate of the billed
- * quantity, not a reading of the bill.
+ * The Gateway bills realtime by *session duration*, so the meter is a clock:
+ * it runs from the moment the socket is live until it closes. While a session
+ * is open the total is recomputed (and persisted) once a second, which is what
+ * makes it a live readout rather than an after-the-fact one.
  */
 export type VoiceUsage = {
-  /** Seconds of audio the model has generated, across all sessions. */
-  outputAudioSeconds: number;
-  /** How many times a session has been connected. */
+  /** Wall-clock seconds connected, across all sessions. */
+  seconds: number;
+  /** How many sessions have been opened. */
   sessions: number;
-  /** Epoch ms of the first metered audio, for "since <date>" in the UI. */
-  startedAt: number | null;
 };
 
-const STORAGE_KEY = "nirvana.voice-usage.v1";
+const STORAGE_KEY = "nirvana.voice-usage.v2";
 
-const EMPTY: VoiceUsage = { outputAudioSeconds: 0, sessions: 0, startedAt: null };
+const EMPTY: VoiceUsage = { seconds: 0, sessions: 0 };
 
-/**
- * Seconds of PCM16 audio in a base64 chunk, counted without decoding it: 4
- * base64 characters encode 3 bytes, and `=` padding is not payload.
- */
-export function base64AudioSeconds(base64: string): number {
-  if (base64.length === 0) return 0;
+const TICK_MS = 1000;
 
-  const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
-  const bytes = Math.max(0, (base64.length * 3) / 4 - padding);
-
-  return bytes / AUDIO_BYTES_PER_SAMPLE / AUDIO_SAMPLE_RATE;
+export function costForSeconds(seconds: number): number {
+  return seconds * USD_PER_SESSION_SECOND;
 }
 
 export function usageToUsd(usage: VoiceUsage): number {
-  return (usage.outputAudioSeconds / 60) * USD_PER_OUTPUT_AUDIO_MINUTE;
+  return costForSeconds(usage.seconds);
 }
 
 /**
@@ -59,60 +45,88 @@ function read(): VoiceUsage {
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== "object" || parsed === null) return EMPTY;
 
-    const { outputAudioSeconds, sessions, startedAt } = parsed as Partial<VoiceUsage>;
+    const { seconds, sessions } = parsed as Partial<VoiceUsage>;
     return {
-      outputAudioSeconds: typeof outputAudioSeconds === "number" ? outputAudioSeconds : 0,
+      seconds: typeof seconds === "number" ? seconds : 0,
       sessions: typeof sessions === "number" ? sessions : 0,
-      startedAt: typeof startedAt === "number" ? startedAt : null,
     };
   } catch {
     return EMPTY;
   }
 }
 
-let usage: VoiceUsage = read();
+/** Everything already banked. The live session's seconds are not in here yet. */
+let banked: VoiceUsage = read();
+
+/** Snapshot handed to React. Replaced (new identity) only when it changes. */
+let current: VoiceUsage = banked;
+
+let liveSince: number | null = null;
+let ticker: ReturnType<typeof setInterval> | null = null;
 
 const listeners = new Set<() => void>();
 
-/**
- * Audio deltas arrive dozens of times a second. The total updates immediately,
- * but subscribers and localStorage are only touched on a timer so the UI is not
- * re-rendered per chunk.
- */
-let flushHandle: ReturnType<typeof setTimeout> | null = null;
-const FLUSH_MS = 500;
-
-function flush(): void {
-  flushHandle = null;
+function persist(): void {
   try {
-    globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(usage));
+    globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(banked));
   } catch {
     // Storage unavailable — the in-memory total still works.
   }
+}
+
+function publish(next: VoiceUsage): void {
+  current = next;
   for (const listener of listeners) listener();
 }
 
-function scheduleFlush(): void {
-  flushHandle ??= setTimeout(flush, FLUSH_MS);
+function liveSeconds(): number {
+  return liveSince == null ? 0 : (Date.now() - liveSince) / 1000;
 }
 
-export function recordOutputAudio(base64: string): void {
-  usage = {
-    ...usage,
-    outputAudioSeconds: usage.outputAudioSeconds + base64AudioSeconds(base64),
-    startedAt: usage.startedAt ?? Date.now(),
-  };
-  scheduleFlush();
+/**
+ * Folds the elapsed time into the banked total and restarts the clock from now,
+ * so a crash or a closed tab loses at most one tick.
+ */
+function bankElapsed(): void {
+  if (liveSince == null) return;
+
+  banked = { ...banked, seconds: banked.seconds + liveSeconds() };
+  liveSince = Date.now();
+  persist();
 }
 
-export function recordSessionStart(): void {
-  usage = { ...usage, sessions: usage.sessions + 1 };
-  flush();
+export function startSessionClock(): void {
+  if (liveSince != null) return;
+
+  banked = { ...banked, sessions: banked.sessions + 1 };
+  liveSince = Date.now();
+  persist();
+
+  ticker ??= setInterval(() => {
+    bankElapsed();
+    publish(banked);
+  }, TICK_MS);
+
+  publish(banked);
+}
+
+export function stopSessionClock(): void {
+  bankElapsed();
+  liveSince = null;
+
+  if (ticker != null) {
+    clearInterval(ticker);
+    ticker = null;
+  }
+
+  publish(banked);
 }
 
 export function resetUsage(): void {
-  usage = EMPTY;
-  flush();
+  banked = EMPTY;
+  if (liveSince != null) liveSince = Date.now();
+  persist();
+  publish(banked);
 }
 
 function subscribe(listener: () => void): () => void {
@@ -121,7 +135,11 @@ function subscribe(listener: () => void): () => void {
 }
 
 function snapshot(): VoiceUsage {
-  return usage;
+  return current;
+}
+
+export function getUsage(): VoiceUsage {
+  return current;
 }
 
 export function useVoiceUsage(): VoiceUsage {

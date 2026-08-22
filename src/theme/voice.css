@@ -54,6 +54,14 @@
   white-space: pre-wrap;
 }
 
+.voice-events {
+  font-size: 0.65rem;
+  opacity: 0.55;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0 0 1rem;
+}
+
 .password-gate {
   display: flex;
   flex-direction: column;
