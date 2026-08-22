@@ -1,5 +1,10 @@
 import { QueryClient } from "@tanstack/react-query";
 
+/**
+ * Nothing queries the API yet — the realtime session talks straight to xAI over
+ * a WebSocket. The provider stays mounted so the next server-state feature has
+ * somewhere to land.
+ */
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -10,7 +15,3 @@ export const queryClient = new QueryClient({
     },
   },
 });
-
-export const queryKeys = {
-  items: ["items"] as const,
-};

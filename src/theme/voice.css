@@ -1,0 +1,74 @@
+/* Layout for the voice page. Colors come from Ionic's CSS variables so the
+   light/dark system palette in variables.css applies here too. */
+
+.voice-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.voice-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.voice-empty {
+  display: block;
+  text-align: center;
+  padding: 2rem 1rem;
+  line-height: 1.5;
+}
+
+.voice-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.voice-turn {
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--ion-color-step-50, #f4f5f8);
+  max-width: 85%;
+}
+
+.voice-turn--user {
+  align-self: flex-end;
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+}
+
+.voice-turn__role {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+  margin-bottom: 0.15rem;
+}
+
+.voice-turn p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.password-gate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 22rem;
+  margin: 15vh auto 0;
+}
+
+.usage-meter {
+  display: flex;
+  flex-direction: column;
+  padding: 0.4rem 1rem;
+  font-size: 0.9rem;
+}
+
+.usage-meter__detail {
+  font-size: 0.75rem;
+}

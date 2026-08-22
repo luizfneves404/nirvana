@@ -1,22 +1,25 @@
 import { z } from "zod";
 
 /**
- * Shared between the Worker and the SPA. Compiled by both tsconfig.app.json
- * and tsconfig.worker.json, so keep this file runtime-agnostic — no Node,
- * DOM, or Workers globals.
+ * Zod lives here rather than in realtime.ts so the SPA can import the shared
+ * constants without pulling the whole validation library into the client
+ * bundle — these schemas only ever run on the Worker.
  */
 
-export const ItemSchema = z.object({
-  id: z.uuid(),
-  title: z.string().min(1).max(200),
-  done: z.boolean(),
-  createdAt: z.number().int(),
+export const PasswordSchema = z.object({
+  password: z.string().min(1).max(200),
 });
 
-export const CreateItemSchema = ItemSchema.pick({ title: true });
+/**
+ * The exact shape `experimental_useRealtime` destructures out of the setup
+ * endpoint. `url` matters as much as `token`: without it the hook calls
+ * `new WebSocket(undefined, ...)`, which fails looking like an auth problem.
+ * Validating server-side turns that into an honest 502.
+ */
+export const RealtimeSetupSchema = z.object({
+  token: z.string().min(1),
+  url: z.url(),
+  expiresAt: z.number().optional(),
+});
 
-export const UpdateItemSchema = ItemSchema.pick({ done: true });
-
-export type Item = z.infer<typeof ItemSchema>;
-export type CreateItem = z.infer<typeof CreateItemSchema>;
-export type UpdateItem = z.infer<typeof UpdateItemSchema>;
+export type RealtimeSetup = z.infer<typeof RealtimeSetupSchema>;

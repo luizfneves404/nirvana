@@ -29,12 +29,19 @@ release. Add a tool name to select part of the graph. For example, run
 # Nirvana
 
 Cloudflare Worker serving a Hono API and a React 19 SPA (Ionic) from static
-assets. The same client bundle is packaged natively by Capacitor. Data is
-Drizzle + D1, server state is TanStack Query, validation is Zod.
+assets. The same client bundle is packaged natively by Capacitor. Server state
+is TanStack Query, validation is Zod.
 
-Single package: `src/` is the SPA, `worker/` is the API, `shared/` holds Zod
-schemas both sides import. Three tsconfig projects (`app`, `worker`, `node`)
-share strict settings from `tsconfig.strict.json`.
+The app is a voice-to-voice conversation with xAI's Grok voice model, over the
+AI SDK's experimental realtime API routed through the Vercel AI Gateway. The
+browser holds the WebSocket; the Worker only mints short-lived client secrets.
+Drizzle + D1 is wired up and migrated but nothing reads it yet — it stays so the
+migrations keep working.
+
+Single package: `src/` is the SPA, `worker/` is the API, `shared/` holds code
+both sides import (`realtime.ts` constants, `schemas.ts` Zod). Three tsconfig
+projects (`app`, `worker`, `node`) share strict settings from
+`tsconfig.strict.json`.
 
 ## Things that will bite you
 
@@ -60,9 +67,31 @@ share strict settings from `tsconfig.strict.json`.
 - **Never hand-edit `worker-configuration.d.ts`.** Run `pnpm run cf-typegen`
   after any binding change. The interface is `CloudflareBindings`, named
   explicitly so it does not collide with Hono's own `Env`.
-- **SPA deep links only fall back with a real navigation request.** `curl /home`
+- **SPA deep links only fall back with a real navigation request.** `curl /voice`
   returns 404; a browser (or `-H "Sec-Fetch-Mode: navigate"`) gets index.html.
   That is expected, not a routing bug.
+
+### Realtime voice
+
+- **The server's model id is the one that counts.** `getToken()` bakes it into
+  the WebSocket URL it returns (`?ai-model-id=...`). The id passed to
+  `gateway.experimental_realtime()` in the browser only names the session — if
+  the two ever drift, the server silently wins.
+- **`model` and `sessionConfig` must be module constants.** `experimental_useRealtime`
+  compares them by identity; an object literal in the component body rebuilds
+  the session store on every render, which reads as a reconnect loop.
+- **Start audio capture on `status === "connected"`, not after `connect()`.**
+  `connect()` resolves when the token fetch does; events sent before the socket
+  opens are dropped on the floor.
+- **The hook owns the setup fetch**, so no custom headers are possible — that is
+  why the shared password rides in the query string on `/api/realtime/setup`.
+- **The AI Gateway needs a card on file** before it services any request, and
+  `getSpendReport()` (real billed cost) is a paid-plan feature. The footer meter
+  is therefore an estimate: it counts the PCM16 bytes in `audio-delta` events
+  and prices them at the published per-minute rate.
+- **Set both audio formats explicitly.** Leave them out and the provider picks
+  its own while the browser captures/plays at `sampleRate` — a mismatch is
+  garbled audio, not an error.
 
 ## Commands
 

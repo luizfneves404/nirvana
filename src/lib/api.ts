@@ -1,6 +1,7 @@
 import { hc } from "hono/client";
 
 import type { AppType } from "../../worker/index.ts";
+import { PASSWORD_QUERY_PARAM } from "../../shared/realtime.ts";
 
 /**
  * On the web the SPA is served by the same Worker, so a relative base works.
@@ -19,3 +20,14 @@ export type Client = ReturnType<typeof hc<AppType>>;
 export const client: Client = hc<AppType>(baseUrl);
 
 export const api = client.api;
+
+/**
+ * `experimental_useRealtime` fetches this URL itself, so it bypasses the RPC
+ * client and carries the password as a query parameter. Built by concatenation
+ * rather than `$url()` because the web base is the relative `/`, which
+ * `new URL()` rejects.
+ */
+export function realtimeSetupUrl(password: string): string {
+  const params = new URLSearchParams({ [PASSWORD_QUERY_PARAM]: password });
+  return `${baseUrl.replace(/\/$/, "")}/api/realtime/setup?${params.toString()}`;
+}

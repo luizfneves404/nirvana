@@ -2,7 +2,7 @@ import { IonApp, IonRouterOutlet } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 import { Navigate, Route } from "react-router-dom";
 
-import Home from "./pages/Home.tsx";
+import Voice from "./pages/Voice.tsx";
 
 /**
  * React Router v6 syntax (`element=`, `<Navigate>`) — Ionic 9 requires
@@ -16,8 +16,8 @@ export default function App() {
     <IonApp>
       <IonReactRouter>
         <IonRouterOutlet>
-          <Route path="/home" element={<Home />} />
-          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/voice" element={<Voice />} />
+          <Route path="/" element={<Navigate to="/voice" replace />} />
         </IonRouterOutlet>
       </IonReactRouter>
     </IonApp>
