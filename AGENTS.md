@@ -85,10 +85,13 @@ projects (`app`, `worker`, `node`) share strict settings from
   opens are dropped on the floor.
 - **The hook owns the setup fetch**, so no custom headers are possible — that is
   why the shared password rides in the query string on `/api/realtime/setup`.
+- **Realtime bills by wall-clock session time, not by speech.** The Gateway's
+  `/v1/models` entry publishes `realtime_session_duration_cost_per_second`, so
+  an idle open socket costs the same as a conversation. The footer meter is a
+  clock for that reason.
 - **The AI Gateway needs a card on file** before it services any request, and
-  `getSpendReport()` (real billed cost) is a paid-plan feature. The footer meter
-  is therefore an estimate: it counts the PCM16 bytes in `audio-delta` events
-  and prices them at the published per-minute rate.
+  `getSpendReport()` (the real invoice) is a paid-plan feature — which is why
+  the cost is metered client-side against the published rate.
 - **Set both audio formats explicitly.** Leave them out and the provider picks
   its own while the browser captures/plays at `sampleRate` — a mismatch is
   garbled audio, not an error.
