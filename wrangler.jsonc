@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nirvana",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+  },
+  "upload_source_maps": true,
+
+  // `directory` is deliberately omitted: @cloudflare/vite-plugin fills it in
+  // on the generated output wrangler.json, pointing at the client build.
+  //
+  // Assets are matched before the Worker runs, so /api/* falls through to Hono
+  // on its own — no `run_worker_first` needed. SPA routes never invoke the
+  // Worker, which also means they are not billed.
+  "assets": {
+    "not_found_handling": "single-page-application",
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nirvana",
+      "database_id": "PLACEHOLDER_RUN_WRANGLER_D1_CREATE",
+      "migrations_dir": "drizzle/migrations",
+    },
+  ],
+}

@@ -5,14 +5,51 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev",
-    "build": "tsc && vp build",
+    "build": "tsc -b && vp build",
     "preview": "vp preview",
-    "prepare": "vp config"
+    "prepare": "vp config",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply nirvana --local",
+    "db:migrate:remote": "wrangler d1 migrations apply nirvana --remote",
+    "deploy": "pnpm run build && wrangler deploy",
+    "build:native": "tsc -b && vp build --mode capacitor",
+    "cap:sync": "pnpm run build:native && cap sync"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "0.9.0",
+    "@ionic/react": "9.0.0",
+    "@ionic/react-router": "9.0.0",
+    "@tanstack/react-query": "5.101.4",
+    "drizzle-orm": "0.45.2",
+    "hono": "4.13.3",
+    "ionicons": "8.1.0",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-router": "6.30.6",
+    "react-router-dom": "6.30.6",
+    "zod": "4.4.3"
   },
   "devDependencies": {
+    "@capacitor/android": "8.5.0",
+    "@capacitor/cli": "8.5.0",
+    "@capacitor/core": "8.5.0",
+    "@capacitor/ios": "8.5.0",
+    "@cloudflare/vite-plugin": "1.53.1",
+    "@cloudflare/vitest-plugin": "1.0.0",
+    "@types/node": "24.10.1",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "6.1.0",
+    "@vitest/runner": "catalog:",
+    "@vitest/snapshot": "catalog:",
+    "drizzle-kit": "0.31.10",
+    "oxc-transform-react": "0.145.0",
     "typescript": "~6.0.2",
     "vite": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "4.125.0"
   },
   "devEngines": {
     "packageManager": {

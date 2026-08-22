@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.strict.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "types": ["node"],
+
+    /**
+     * Relaxed for build-config files only. vite-plus's `lazyPlugins()` returns
+     * `PluginOption[] | undefined` by design (it returns undefined when vp is
+     * only reading metadata), but Vite declares `plugins` as non-undefined.
+     * Application code in src/ and worker/ keeps the flag on.
+     */
+    "exactOptionalPropertyTypes": false,
+
+    /* Bundler mode */
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "allowImportingTsExtensions": true
+  },
+  "include": ["vite.config.ts", "drizzle.config.ts", "capacitor.config.ts"]
+}

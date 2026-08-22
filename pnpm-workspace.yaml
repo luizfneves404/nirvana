@@ -1,8 +1,31 @@
+allowBuilds:
+  # workerd is the Cloudflare Workers runtime binary — required by
+  # @cloudflare/vite-plugin for dev/preview and by the Workers test project.
+  workerd: true
+  esbuild: true
+
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.2.9
   vite-plus: 0.2.9
+
+  # Vitest must match the version bundled inside vite-plus exactly.
+  # @cloudflare/vitest-plugin peers on ^4.1.0 and fails if two copies resolve.
+  vitest: 4.1.10
+  "@vitest/runner": 4.1.10
+  "@vitest/snapshot": 4.1.10
+
+  react: 19.2.8
+  react-dom: 19.2.8
+  "@types/react": 19.2.7
+  "@types/react-dom": 19.2.3
+
 overrides:
   vite: "catalog:"
+  # Force a single Vitest instance across the tree.
+  vitest: "catalog:"
+  "@vitest/runner": "catalog:"
+  "@vitest/snapshot": "catalog:"
+
 peerDependencyRules:
   allowAny:
     - vite

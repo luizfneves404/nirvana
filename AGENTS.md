@@ -25,3 +25,48 @@ release. Add a tool name to select part of the graph. For example, run
 - [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
 
 <!--VITE PLUS END-->
+
+# Nirvana
+
+Cloudflare Worker serving a Hono API and a React 19 SPA (Ionic) from static
+assets. The same client bundle is packaged natively by Capacitor. Data is
+Drizzle + D1, server state is TanStack Query, validation is Zod.
+
+Single package: `src/` is the SPA, `worker/` is the API, `shared/` holds Zod
+schemas both sides import. Three tsconfig projects (`app`, `worker`, `node`)
+share strict settings from `tsconfig.strict.json`.
+
+## Things that will bite you
+
+- **React Compiler is on** (native Oxc, `react({ compiler: true })`). Do not add
+  `useMemo`/`useCallback`/`React.memo` for performance — the compiler does it,
+  and manual memoization can defeat it. Verified working: the dev transform
+  emits `_c` cache slots from `react/compiler-runtime`.
+- **Hono routes must stay chained.** Splitting the `.get().post()` chain in
+  `worker/index.ts` into separate statements silently degrades RPC types to
+  `any` — the client still compiles, it just stops type-checking.
+- **Import test helpers from `vite-plus/test`, never `vitest`.** Vite+ re-exports
+  its bundled Vitest 4.1.10; `vitest` is pinned in the catalog to that exact
+  version because `@cloudflare/vitest-plugin` needs to resolve one copy.
+- **`cloudflare()` is disabled under Vitest** (see the `isVitest` guard in
+  `vite.config.ts`). Vite+ injects `resolve.external` into every environment and
+  the Cloudflare plugin rejects that on Worker environments, so `vp test` cannot
+  start with it loaded. The workers test project uses `cloudflareTest()` instead.
+- **Ionic 9 uses React Router v6** — `element=` and `<Navigate>`, not `component=`
+  or `<Redirect>`. Parent routes with nested children need a `/*` suffix.
+- **D1 has no BOOLEAN or DATETIME.** Use `integer({ mode: "boolean" })` and
+  `integer({ mode: "timestamp" })`. Foreign keys are always enforced, and a
+  query is capped at 100 bound parameters.
+- **Never hand-edit `worker-configuration.d.ts`.** Run `pnpm run cf-typegen`
+  after any binding change. The interface is `CloudflareBindings`, named
+  explicitly so it does not collide with Hono's own `Env`.
+- **SPA deep links only fall back with a real navigation request.** `curl /home`
+  returns 404; a browser (or `-H "Sec-Fetch-Mode: navigate"`) gets index.html.
+  That is expected, not a routing bug.
+
+## Commands
+
+`vp dev` · `vp check` · `vp test` · `vp build` · `pnpm run cf-typegen` ·
+`pnpm run db:generate` then `pnpm run db:migrate:local` · `pnpm run cap:sync`.
+
+Use `pnpx` rather than `npx` — `npx` fails on this repo's pnpm `devEngines` pin.

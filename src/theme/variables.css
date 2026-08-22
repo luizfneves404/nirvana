@@ -1,0 +1,11 @@
+/**
+ * Ionic theme variables. Ionic ships light and dark palettes; importing the
+ * system palette makes the app follow the OS setting on web and native.
+ *
+ * Full variable reference: https://ionicframework.com/docs/theming/css-variables
+ */
+@import "@ionic/react/css/palettes/dark.system.css";
+
+:root {
+  --ion-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
