@@ -8,7 +8,6 @@
     "enabled": true,
   },
   "upload_source_maps": true,
-
   // `directory` is deliberately omitted: @cloudflare/vite-plugin fills it in
   // on the generated output wrangler.json, pointing at the client build.
   //
@@ -18,12 +17,13 @@
   "assets": {
     "not_found_handling": "single-page-application",
   },
-
+  // Binding stays `DB`: worker/index.ts reads c.env.DB and the generated
+  // CloudflareBindings interface declares it under that name.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "nirvana",
-      "database_id": "PLACEHOLDER_RUN_WRANGLER_D1_CREATE",
+      "database_id": "cc562a8f-5a4c-4f35-9825-5a19f51a14cc",
       "migrations_dir": "drizzle/migrations",
     },
   ],
