@@ -88,7 +88,9 @@ projects (`app`, `worker`, `node`) share strict settings from
 - **Realtime bills by wall-clock session time, not by speech.** The Gateway's
   `/v1/models` entry publishes `realtime_session_duration_cost_per_second`, so
   an idle open socket costs the same as a conversation. The footer meter is a
-  clock for that reason.
+  clock for that reason, and `VoiceSession` hangs up on its own when the tab is
+  hidden or two minutes pass with no speech — that is the billing guard, not a
+  bug to "fix".
 - **The AI Gateway needs a card on file** before it services any request, and
   `getSpendReport()` (the real invoice) is a paid-plan feature — which is why
   the cost is metered client-side against the published rate.

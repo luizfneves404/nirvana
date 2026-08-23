@@ -47,15 +47,33 @@ const sessionConfig = {
  * One conversation. The parent remounts this with a new `key` to clear it —
  * the hook keeps its store in a ref, so a remount is what starts a fresh one.
  */
+/**
+ * Billing runs on wall-clock time, so an unattended open session is a leak.
+ * Two guards close it: leaving the tab, and going quiet for this long.
+ */
+const IDLE_TIMEOUT_MS = 2 * 60_000;
+const IDLE_CHECK_MS = 5_000;
+
 export default function VoiceSession({ password }: { password: string }) {
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const lastActivityRef = useRef(0);
 
   const realtime = experimental_useRealtime({
     model: voiceModel,
     api: { token: realtimeSetupUrl(password) },
     sessionConfig,
     sampleRate: AUDIO_SAMPLE_RATE,
+    onEvent: (event) => {
+      if (
+        event.type === "speech-started" ||
+        event.type === "audio-delta" ||
+        event.type === "input-transcription-completed"
+      ) {
+        lastActivityRef.current = Date.now();
+      }
+    },
     onError: (sessionError) => setError(sessionError.message),
   });
 
@@ -95,6 +113,7 @@ export default function VoiceSession({ password }: { password: string }) {
 
   const start = async () => {
     setError(null);
+    setNotice(null);
     try {
       // Requested inside the click so the permission prompt lands in the
       // user's gesture, and so the AudioContext is allowed to make sound.
@@ -113,6 +132,55 @@ export default function VoiceSession({ password }: { password: string }) {
     streamRef.current = null;
     realtime.disconnect();
   };
+
+  /**
+   * Held in a ref so the guards below can depend on `status` alone. The hook
+   * re-binds its methods every render, so putting `stop` in a dependency array
+   * would tear the idle timer down before it ever fires.
+   */
+  const stopRef = useRef(stop);
+  useEffect(() => {
+    stopRef.current = stop;
+  });
+
+  /**
+   * The two ways an open session quietly costs money: the tab goes to the
+   * background (another app, a locked phone) or it is left connected in an
+   * empty room. Both hang up rather than keep the meter running.
+   */
+  useEffect(() => {
+    if (status !== "connected") return;
+
+    lastActivityRef.current = Date.now();
+
+    const hangUp = (why: string) => {
+      setNotice(why);
+      stopRef.current();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden)
+        hangUp("Hung up when the tab went to the background — it bills by the second.");
+    };
+
+    /* Closing the tab kills the socket; this banks the last seconds locally. */
+    const onPageHide = () => stopSessionClock();
+
+    const idleTimer = setInterval(() => {
+      if (Date.now() - lastActivityRef.current > IDLE_TIMEOUT_MS) {
+        hangUp("Hung up after two minutes of silence.");
+      }
+    }, IDLE_CHECK_MS);
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", onPageHide);
+
+    return () => {
+      clearInterval(idleTimer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", onPageHide);
+    };
+  }, [status]);
 
   const isLive = status === "connected" || status === "connecting";
 
@@ -155,6 +223,8 @@ export default function VoiceSession({ password }: { password: string }) {
             <p>{error}</p>
           </IonText>
         )}
+
+        {notice != null && <IonNote>{notice}</IonNote>}
       </div>
 
       {/**
