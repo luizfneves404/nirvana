@@ -14,7 +14,8 @@
     "db:migrate:remote": "wrangler d1 migrations apply nirvana --remote",
     "deploy": "pnpm run build && wrangler deploy",
     "build:native": "tsc -b && vp build --mode capacitor",
-    "cap:sync": "pnpm run build:native && cap sync"
+    "cap:sync": "pnpm run build:native && cap sync",
+    "cap:run": "pnpm run build:native && cap run android"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.79",

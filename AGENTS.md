@@ -67,6 +67,22 @@ projects (`app`, `worker`, `node`) share strict settings from
 - **Never hand-edit `worker-configuration.d.ts`.** Run `pnpm run cf-typegen`
   after any binding change. The interface is `CloudflareBindings`, named
   explicitly so it does not collide with Hono's own `Env`.
+- **The microphone needs two Android permissions, not one.**
+  `BridgeWebChromeClient.onPermissionRequest` asks for `MODIFY_AUDIO_SETTINGS`
+  _and_ `RECORD_AUDIO` together for an `AUDIO_CAPTURE` request, then grants the
+  WebView only if every permission in that batch came back granted.
+  `MODIFY_AUDIO_SETTINGS` is a normal permission — granted at install, but only
+  if declared. Leave it out and the user taps Allow on the mic prompt and
+  `getUserMedia` is refused anyway. Both are declared in
+  `android/app/src/main/AndroidManifest.xml`, which is why `android/` is
+  committed rather than regenerated. iOS will want
+  `NSMicrophoneUsageDescription` in `Info.plist` for the same reason.
+- **`cap sync` ships whatever last wrote `dist/client`.** `vp build` bakes a
+  relative API base and `vp build --mode capacitor` bakes the deployed Worker
+  URL, into the same directory `webDir` points at. Always go through
+  `pnpm run cap:sync`; a bare `cap sync` after a web build produces an app that
+  resolves `/api/*` against `https://localhost`, which the local asset server
+  answers with `index.html` — it reads as a backend outage, not a build slip.
 - **SPA deep links only fall back with a real navigation request.** `curl /voice`
   returns 404; a browser (or `-H "Sec-Fetch-Mode: navigate"`) gets index.html.
   That is expected, not a routing bug.
