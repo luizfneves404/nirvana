@@ -31,3 +31,12 @@ export function realtimeSetupUrl(password: string): string {
   const params = new URLSearchParams({ [PASSWORD_QUERY_PARAM]: password });
   return `${baseUrl.replace(/\/$/, "")}/api/realtime/setup?${params.toString()}`;
 }
+
+/**
+ * `/api/view` streams NDJSON, so it is read with a raw `fetch` rather than the
+ * RPC client — `hc` would resolve the whole body before the first progress
+ * line ever reached the UI, which is the entire point of the endpoint.
+ */
+export function viewUrl(): string {
+  return `${baseUrl.replace(/\/$/, "")}/api/view`;
+}

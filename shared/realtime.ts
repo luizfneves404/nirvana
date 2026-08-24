@@ -4,6 +4,8 @@
  * DOM, or Workers globals.
  */
 
+import type { Experimental_RealtimeToolDefinition } from "ai";
+
 /**
  * xAI's flagship voice-to-voice model — "Grok voice 2" — reached through the
  * Vercel AI Gateway, which is why the id carries the `spacexai/` prefix.
@@ -57,3 +59,57 @@ export const USD_PER_CLIENT_TEXT_MESSAGE = 0.004;
  * bot deterrent on a public URL, not real authentication.
  */
 export const PASSWORD_QUERY_PARAM = "key";
+
+/**
+ * Tools are declared on the **Worker**, not in the browser. `connect()`
+ * destructures `tools` out of the setup response and folds it into the
+ * `session-update` it sends on open — the browser's `sessionConfig` has no say.
+ * The browser only supplies the handler, via `onToolCall`.
+ */
+export const RENDER_VIEW_TOOL_NAME = "render_view";
+
+export const REALTIME_TOOLS: Experimental_RealtimeToolDefinition[] = [
+  {
+    type: "function",
+    name: RENDER_VIEW_TOOL_NAME,
+    description:
+      "Put something on the user's screen. Hands the request to a coding agent, " +
+      "which writes a small self-contained web page and renders it. Use this for " +
+      "anything worth seeing rather than hearing: a chart, a diagram, a table, a " +
+      "countdown, a drawing, a simulation, a form. It returns as soon as the work " +
+      "starts, not when the page is ready — say something to the user while they " +
+      "wait, and the app will tell you when it lands.",
+    parameters: {
+      type: "object",
+      properties: {
+        request: {
+          type: "string",
+          description:
+            "What the user should end up seeing, in plain language, written for " +
+            "someone who cannot hear the conversation. Include any concrete data " +
+            "or numbers that came up — the coding agent has no other source for " +
+            "them. If the user is changing something already on screen, say what " +
+            "to change rather than describing the whole page again.",
+        },
+      },
+      required: ["request"],
+      additionalProperties: false,
+    },
+  },
+];
+
+export type RenderViewArgs = { request: string };
+
+/**
+ * Tool arguments arrive as whatever JSON the model produced — the SDK parses
+ * them but validates nothing. Parsing here rather than in the component keeps
+ * the shape next to the JSON Schema that asked for it, so the two cannot drift.
+ */
+export function parseRenderViewArgs(args: unknown): RenderViewArgs | null {
+  if (typeof args !== "object" || args === null) return null;
+
+  const { request } = args as { request?: unknown };
+  if (typeof request !== "string" || request.trim() === "") return null;
+
+  return { request: request.trim().slice(0, 2000) };
+}

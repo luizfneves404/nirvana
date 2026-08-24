@@ -27,25 +27,34 @@
   gap: 0.75rem;
 }
 
+/* Both bubbles keep the page's own text color and differ only by how heavy the
+   surface behind them is. The previous version put white-ish text on
+   --ion-color-primary, which is unreadable the moment the primary is light.
+
+   Every fallback here is a grey with an alpha, so it composites over whatever
+   is behind it and stays legible in both palettes — a hard-coded #f4f5f8
+   fallback is a light color that lands in dark mode too. */
 .voice-turn {
   border-radius: 0.75rem;
   padding: 0.6rem 0.9rem;
-  background: var(--ion-color-step-50, #f4f5f8);
   max-width: 85%;
+  background: var(--ion-color-step-100, rgb(128 128 128 / 12%));
+  color: var(--ion-text-color, currentcolor);
 }
 
 .voice-turn--user {
   align-self: flex-end;
-  background: var(--ion-color-primary);
-  color: var(--ion-color-primary-contrast);
+  background: var(--ion-color-step-200, rgb(128 128 128 / 22%));
 }
 
+/* Explicit mid-tone rather than opacity: 0.6 of the text color over a tinted
+   bubble was the least readable thing on the page. */
 .voice-turn__role {
   display: block;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  opacity: 0.6;
+  color: var(--ion-color-step-600, rgb(128 128 128));
   margin-bottom: 0.15rem;
 }
 
@@ -54,9 +63,57 @@
   white-space: pre-wrap;
 }
 
+.voice-turn__tool {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--ion-color-step-600, rgb(128 128 128));
+  word-break: break-all;
+}
+
+/* The coding agent's output, kept above the transcript so it reads as the
+   thing being talked about rather than another line of conversation. */
+.voice-building {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--ion-color-step-100, rgb(128 128 128 / 12%));
+  color: var(--ion-text-color, currentcolor);
+}
+
+.voice-view-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 1.25rem;
+}
+
+/* A published view sizes itself to this box, so the box has to have a size —
+   an iframe with no height collapses and the page looks like it never landed. */
+.voice-view {
+  width: 100%;
+  height: min(60vh, 30rem);
+  border: none;
+  border-radius: 0.75rem;
+  /* Opaque on purpose: a published view sets its own background, and a
+     translucent frame would let the app bleed through it. */
+  background: var(--ion-background-color, #fff);
+  display: block;
+}
+
+.voice-view-panel__title {
+  font-size: 0.75rem;
+  text-align: center;
+}
+
 .voice-events {
   font-size: 0.65rem;
-  opacity: 0.55;
+  color: var(--ion-color-step-600, rgb(128 128 128));
   white-space: pre-wrap;
   word-break: break-all;
   margin: 0 0 1rem;

@@ -97,6 +97,16 @@ projects (`app`, `worker`, `node`) share strict settings from
 - **Set both audio formats explicitly.** Leave them out and the provider picks
   its own while the browser captures/plays at `sampleRate` — a mismatch is
   garbled audio, not an error.
+- **The coding agent edits a draft; `publish_view` takes no HTML.** The loop in
+  `worker/view-agent.ts` holds the document in a mutable `draft` the tools
+  mutate (`write_view`/`edit_view`), and publishing publishes the draft. The
+  client's `view.html` is the source of truth _between_ requests — it comes
+  back as `currentHtml`, already sealed, which is why `sealViewHtml` must stay
+  idempotent.
+- **`nirvana:state` is what keeps a game alive across an edit.** The page posts
+  its state to the parent whenever it changes; the parent keeps only the latest
+  and posts it back into the new frame on `load`. The parent never inspects the
+  state, so rejecting a stale or foreign state is the page's own job.
 
 ## Commands
 

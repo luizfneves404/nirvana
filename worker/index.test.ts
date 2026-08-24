@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { PASSWORD_QUERY_PARAM } from "../shared/realtime.ts";
+import { PASSWORD_QUERY_PARAM, RENDER_VIEW_TOOL_NAME } from "../shared/realtime.ts";
 import app from "./index.ts";
 
 /**
@@ -88,6 +88,23 @@ describe("worker routing", () => {
     expect(body.url.startsWith("wss://")).toBe(true);
   });
 
+  it("ships the tool definitions with the token", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ token: "vcst_abc" })),
+    );
+
+    const res = await setup(PASSWORD);
+    const body = await res.json<{ tools: { name: string }[] }>();
+
+    /**
+     * This response is the *only* place tool definitions reach the model —
+     * `connect()` reads them here and folds them into the session-update it
+     * sends on open. Drop them and the voice agent silently loses its screen.
+     */
+    expect(body.tools.map((tool) => tool.name)).toContain(RENDER_VIEW_TOOL_NAME);
+  });
+
   it("reports an upstream rejection as 502 rather than throwing", async () => {
     vi.stubGlobal(
       "fetch",
@@ -96,6 +113,50 @@ describe("worker routing", () => {
 
     const res = await setup(PASSWORD);
     expect(res.status).toBe(502);
+  });
+
+  /**
+   * The one seam the unit tests cannot see: `prepareSendMessagesRequest` in
+   * use-view-builder.ts builds this body, and `ViewRequestSchema` has to accept
+   * it. If they drift, every render fails with a Zod dump that Grok then reads
+   * out loud.
+   */
+  const view = (body: object) =>
+    app.request(
+      "/api/view",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+      },
+      env,
+    );
+
+  it("accepts the body the view transport builds", async () => {
+    // Rejected on the password, which means it got past validation — the point
+    // here is the schema, not the agent, which no test should be paying for.
+    expect((await view({ password: "nope", request: "draw a spiral" })).status).toBe(401);
+    expect(
+      (await view({ password: "nope", request: "make it red", currentHtml: "<!doctype html><p>x" }))
+        .status,
+    ).toBe(401);
+  });
+
+  it("rejects a view request with nothing in it", async () => {
+    expect((await view({ password: PASSWORD, request: "" })).status).toBe(400);
+  });
+
+  it("checks the view password before it looks at the Gateway key", async () => {
+    const res = await app.request(
+      "/api/view",
+      {
+        method: "POST",
+        body: JSON.stringify({ password: PASSWORD, request: "draw a spiral" }),
+        headers: { "Content-Type": "application/json" },
+      },
+      { ...env, AI_GATEWAY_API_KEY: "" },
+    );
+    expect(res.status).toBe(500);
   });
 
   it("allows the Capacitor native origin through CORS", async () => {
