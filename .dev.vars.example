@@ -1,0 +1,11 @@
+# Copy to `.dev.vars` and fill both in — `vp dev` reads it. The deployed Worker
+# gets the same two names via `pnpm exec wrangler secret put <NAME>`.
+
+# Vercel AI Gateway key: mints the realtime voice token and runs the view
+# agent. The Gateway needs a card on file before it services any request.
+# https://vercel.com/ai-gateway
+AI_GATEWAY_API_KEY=
+
+# Shared password. Not real auth — it stops a crawler that finds the public
+# Worker URL from opening billable voice sessions. Any non-empty string works.
+APP_PASSWORD=
