@@ -228,8 +228,18 @@ export default function VoiceSession({ password }: { password: string }) {
       // Requested inside the click so the permission prompt lands in the
       // user's gesture, and so the AudioContext is allowed to make sound.
       streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      setError("Microphone access was denied.");
+    } catch (cause) {
+      /**
+       * The name matters: every failure here used to read as "denied", which
+       * sent us hunting for a permission problem when the microphone was
+       * missing or already held by another app.
+       */
+      const name = cause instanceof Error ? cause.name : "";
+      setError(
+        name === "NotAllowedError" || name === "SecurityError" || name === ""
+          ? "Microphone access was denied."
+          : `The microphone could not be opened (${name}).`,
+      );
       return;
     }
 
