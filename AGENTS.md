@@ -26,7 +26,7 @@ release. Add a tool name to select part of the graph. For example, run
 
 <!--VITE PLUS END-->
 
-# Nirvana
+# Astro
 
 Cloudflare Worker serving a Hono API and a React 19 SPA (Ionic) from static
 assets. The same client bundle is packaged natively by Capacitor. Server state
@@ -119,7 +119,7 @@ projects (`app`, `worker`, `node`) share strict settings from
   client's `view.html` is the source of truth _between_ requests — it comes
   back as `currentHtml`, already sealed, which is why `sealViewHtml` must stay
   idempotent.
-- **`nirvana:state` is what keeps a game alive across an edit.** The page posts
+- **`astro:state` is what keeps a game alive across an edit.** The page posts
   its state to the parent whenever it changes; the parent keeps only the latest
   and posts it back into the new frame on `load`. The parent never inspects the
   state, so rejecting a stale or foreign state is the page's own job.

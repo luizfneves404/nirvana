@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "nirvana",
+  "name": "astro",
   "main": "worker/index.ts",
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
@@ -22,7 +22,7 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "nirvana",
+      "database_name": "astro",
       "database_id": "cc562a8f-5a4c-4f35-9825-5a19f51a14cc",
       "migrations_dir": "drizzle/migrations",
     },

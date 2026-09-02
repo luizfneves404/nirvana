@@ -1,5 +1,5 @@
 {
-  "name": "nirvana",
+  "name": "astro",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,8 +10,8 @@
     "prepare": "vp config",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 migrations apply nirvana --local",
-    "db:migrate:remote": "wrangler d1 migrations apply nirvana --remote",
+    "db:migrate:local": "wrangler d1 migrations apply astro --local",
+    "db:migrate:remote": "wrangler d1 migrations apply astro --remote",
     "deploy": "pnpm run build && wrangler deploy",
     "build:native": "tsc -b && vp build --mode capacitor",
     "cap:sync": "pnpm run build:native && cap sync",

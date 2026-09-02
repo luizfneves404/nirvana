@@ -40,7 +40,7 @@ export const VIEW_CSP =
   "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:";
 
 /** The one message shape the parent will listen to. Anything else is dropped. */
-export const VIEW_EVENT_TYPE = "nirvana:event";
+export const VIEW_EVENT_TYPE = "astro:event";
 
 /**
  * The state-carry channel. A `srcDoc` swap reloads the frame and would reset a
@@ -50,7 +50,7 @@ export const VIEW_EVENT_TYPE = "nirvana:event";
  * *different* page arrives through the same channel, and validating it is the
  * page's job because only the page knows its own shape.
  */
-export const VIEW_STATE_TYPE = "nirvana:state";
+export const VIEW_STATE_TYPE = "astro:state";
 
 /**
  * Caps what a sandboxed page can make the parent hold. Well above any sane
@@ -216,7 +216,7 @@ export function parseViewEvent(data: unknown): ViewEvent | null {
 }
 
 /**
- * The parent-side check for `nirvana:state` messages. The state itself is
+ * The parent-side check for `astro:state` messages. The state itself is
  * opaque — the parent stores it and posts it back, never reads it — so the only
  * questions are "is this the reserved shape" and "is it small and plain enough
  * to hold". `JSON.stringify` answers both: it bounds the size and rejects

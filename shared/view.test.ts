@@ -101,7 +101,7 @@ describe("parseViewState", () => {
     expect(parseViewState({ type: VIEW_EVENT_TYPE, state: 1 })).toBeNull();
     expect(parseViewState({ type: VIEW_STATE_TYPE })).toBeNull();
     expect(parseViewState(null)).toBeNull();
-    expect(parseViewState("nirvana:state")).toBeNull();
+    expect(parseViewState("astro:state")).toBeNull();
   });
 
   it("drops state that cannot round-trip through JSON or is oversized", () => {
@@ -141,7 +141,7 @@ describe("parseViewEvent", () => {
     expect(parseViewEvent({ type: "webpack-hmr", name: "x" })).toBeNull();
     expect(parseViewEvent({ name: "select" })).toBeNull();
     expect(parseViewEvent({ type: VIEW_EVENT_TYPE, name: "" })).toBeNull();
-    expect(parseViewEvent("nirvana:event")).toBeNull();
+    expect(parseViewEvent("astro:event")).toBeNull();
     expect(parseViewEvent(null)).toBeNull();
   });
 

@@ -1,4 +1,4 @@
-package dev.nirvana.app;
+package dev.astro.app;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -18,7 +18,7 @@ export type VoiceUsage = {
   sessions: number;
 };
 
-const STORAGE_KEY = "nirvana.voice-usage.v2";
+const STORAGE_KEY = "astro.voice-usage.v2";
 
 const EMPTY: VoiceUsage = { seconds: 0, sessions: 0 };
 

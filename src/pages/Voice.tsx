@@ -42,7 +42,7 @@ export default function Voice() {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Nirvana</IonTitle>
+          <IonTitle>Astro</IonTitle>
           {password !== "" && (
             <IonButtons slot="end">
               <IonButton onClick={() => setSessionKey((key) => key + 1)}>

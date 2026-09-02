@@ -10,8 +10,8 @@ import type { CapacitorConfig } from "@capacitor/cli";
  * allows the capacitor://localhost and https://localhost origins in CORS.
  */
 const config: CapacitorConfig = {
-  appId: "dev.nirvana.app",
-  appName: "Nirvana",
+  appId: "dev.astro.app",
+  appName: "Astro",
   webDir: "dist/client",
 };
 

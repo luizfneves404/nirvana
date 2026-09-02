@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
  * device. It gates a public URL against crawlers; it is not a user account.
  */
 
-const STORAGE_KEY = "nirvana.password.v1";
+const STORAGE_KEY = "astro.password.v1";
 
 function read(): string {
   try {

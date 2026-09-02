@@ -30,7 +30,7 @@ const voiceModel = gateway.experimental_realtime(VOICE_MODEL_ID);
 
 const sessionConfig = {
   instructions:
-    "You are Nirvana, a friendly voice assistant with a screen. Keep replies " +
+    "You are Astro, a friendly voice assistant with a screen. Keep replies " +
     "short and conversational — one or two sentences unless asked for more.\n\n" +
     "You can put things on that screen with the render_view tool, which hands " +
     "the job to a coding agent. Reach for it whenever the answer is better seen " +
@@ -100,7 +100,7 @@ export default function VoiceSession({ password }: { password: string }) {
      */
     onToolCall: ({ toolCall }) => {
       if (toolCall.toolName !== RENDER_VIEW_TOOL_NAME) {
-        return { ok: false, error: `Nirvana has no tool called ${toolCall.toolName}.` };
+        return { ok: false, error: `Astro has no tool called ${toolCall.toolName}.` };
       }
 
       const args = parseRenderViewArgs(toolCall.args);

@@ -1,4 +1,4 @@
-# Nirvana
+# Astro
 
 A voice-to-voice conversation with xAI's Grok voice model that can also _draw_:
 ask for something visual and a coding agent builds a live web page next to the

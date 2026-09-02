@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Nirvana</string>
-    <string name="title_activity_main">Nirvana</string>
-    <string name="package_name">dev.nirvana.app</string>
-    <string name="custom_url_scheme">dev.nirvana.app</string>
+    <string name="app_name">Astro</string>
+    <string name="title_activity_main">Astro</string>
+    <string name="package_name">dev.astro.app</string>
+    <string name="custom_url_scheme">dev.astro.app</string>
 </resources>
